@@ -1,4 +1,4 @@
-const { defineConfig, devices } = require('@playwright/test');
+const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -14,10 +14,15 @@ module.exports = defineConfig({
   },
   projects: [
     {
-      name: 'mobile-chromium',
+      name: 'samsung-galaxy-chromium',
       use: {
-        ...devices['iPhone 13'],
-        browserName: 'chromium'
+        browserName: 'chromium',
+        viewport: { width: 360, height: 780 },
+        screen: { width: 360, height: 780 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-S911B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
       }
     }
   ]
