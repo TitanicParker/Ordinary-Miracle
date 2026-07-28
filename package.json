@@ -1,0 +1,10 @@
+{
+  "name": "ordinary-miracle-reader-tests",
+  "private": true,
+  "scripts": {
+    "test:mobile": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.54.1"
+  }
+}
