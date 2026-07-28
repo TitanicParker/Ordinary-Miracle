@@ -14,8 +14,15 @@ test('mobile landing page renders compact contents and reading times', async ({ 
   expect(firstChapterTime).toMatch(/^\d+ min$/);
   await expect(page.locator('.cover__actions a[href="#chapter-1"]')).toContainText(firstChapterTime);
 
+  await page.screenshot({ path: 'test-results/samsung-cover.png' });
+
+  await page.locator('#contents').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/samsung-contents.png' });
+
   await page.locator('.contents-part').nth(1).locator('summary').click();
   await expect(page.locator('.contents-part').nth(1)).toHaveAttribute('open', '');
+  await page.locator('.contents-part').nth(1).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/samsung-expanded-part.png' });
 
   await page.locator('.contents-part').nth(1).locator('a[href="#chapter-5"]').click();
   await expect(page).toHaveURL(/#chapter-5$/);
@@ -24,5 +31,5 @@ test('mobile landing page renders compact contents and reading times', async ({ 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 
-  await page.screenshot({ path: 'test-results/mobile-landing.png', fullPage: true });
+  await page.screenshot({ path: 'test-results/samsung-chapter.png' });
 });
