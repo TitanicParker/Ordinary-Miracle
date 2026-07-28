@@ -15,13 +15,51 @@
   }
   body { display: grid; place-items: center; }
   canvas { width: min(96vw,96vh); height: min(96vw,96vh); display:block; }
+  .return-control {
+    position: fixed;
+    z-index: 20;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid rgba(220,245,255,.32);
+    border-radius: 999px;
+    background: rgba(5,12,20,.72);
+    color: #e7f7ff;
+    box-shadow: 0 8px 30px rgba(0,0,0,.32);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    font: 650 13px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: .02em;
+    cursor: pointer;
+  }
+  .return-control:hover { background: rgba(20,42,56,.84); }
+  .return-control:focus-visible { outline: 2px solid #dff8ff; outline-offset: 3px; }
 </style>
 </head>
 <body>
+<button class="return-control" id="returnToReader" type="button" aria-label="Return to the Completed Intelligibility reader">← Return to reading</button>
 <canvas id="c" aria-label="Theorem Zero endless lawful emergence runtime"></canvas>
 <script>
 (() => {
   'use strict';
+
+  const returnButton = document.getElementById('returnToReader');
+  const returnToReader = () => {
+    window.close();
+    window.setTimeout(() => {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'index.html';
+    }, 160);
+  };
+  returnButton.addEventListener('click', returnToReader);
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      returnToReader();
+    }
+  });
+
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   const SQRT3 = Math.sqrt(3);
