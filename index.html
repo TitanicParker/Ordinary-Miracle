@@ -2,23 +2,387 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Completed Intelligibility, a revised manuscript in eight parts and thirty-two chapters.">
   <title>Completed Intelligibility</title>
-  <script>
-    (() => {
-      const target = new URL('Ordinary%20Miracle.html', window.location.href);
-      target.search = window.location.search;
-      target.hash = window.location.hash;
-      window.location.replace(target.href);
-    })();
-  </script>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f2eee6; color: #22201d; }
+    .loading { width: min(32rem, calc(100% - 2rem)); padding: 2rem; text-align: center; }
+    .loading h1 { margin: 0 0 .75rem; font-family: Georgia, serif; font-size: clamp(2rem, 9vw, 4rem); line-height: 1; }
+    .loading p { line-height: 1.6; }
+    .loading a { color: inherit; }
+    @media (prefers-color-scheme: dark) { body { background: #15191d; color: #f4f0e8; } }
+  </style>
 </head>
 <body>
-  <main>
+  <main class="loading" aria-live="polite">
     <h1>Completed Intelligibility</h1>
-    <p><a href="Ordinary%20Miracle.html">Open the digital book</a>.</p>
+    <p>Preparing the reader…</p>
+    <noscript><p>JavaScript is needed for the compact chapter menu. <a href="Ordinary%20Miracle.html">Open the original reader</a>.</p></noscript>
   </main>
+  <script>
+    (() => {
+      'use strict';
+
+      const BOOK_URL = 'Ordinary%20Miracle.html';
+      const WORDS_PER_MINUTE = 205;
+
+      const cleanText = value => (value || '').replace(/\s+/g, ' ').trim();
+      const wordCount = value => (cleanText(value).match(/[\p{L}\p{N}]+(?:[’'\-][\p{L}\p{N}]+)*/gu) || []).length;
+      const minutesFor = value => Math.max(1, Math.ceil(wordCount(value) / WORDS_PER_MINUTE));
+
+      const formatTotalTime = minutes => {
+        const hours = Math.floor(minutes / 60);
+        const remainder = minutes % 60;
+        if (!hours) return `About ${minutes} min total`;
+        if (!remainder) return `About ${hours} hr total`;
+        return `About ${hours} hr ${remainder} min total`;
+      };
+
+      const mobileReaderStyles = `
+        /* Mobile-first landing page and compact chapter browser */
+        .contents__intro {
+          max-width: 38rem;
+          margin: .75rem 0 1.5rem;
+          color: var(--muted, currentColor);
+          font-size: .98rem;
+          line-height: 1.55;
+        }
+
+        #contents .contents-groups--compact {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: .75rem;
+          margin-top: 1.5rem;
+        }
+
+        #contents .contents-part {
+          margin: 0;
+          border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+          border-radius: 1rem;
+          background: color-mix(in srgb, var(--page, Canvas) 94%, currentColor 6%);
+          overflow: clip;
+          box-shadow: 0 .25rem 1rem color-mix(in srgb, #000 7%, transparent);
+        }
+
+        #contents .contents-part summary {
+          position: relative;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 1rem;
+          align-items: center;
+          min-height: 4.25rem;
+          padding: .85rem 3.2rem .85rem 1rem;
+          cursor: pointer;
+          list-style: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        #contents .contents-part summary::-webkit-details-marker { display: none; }
+        #contents .contents-part summary::after {
+          content: '+';
+          position: absolute;
+          right: 1rem;
+          top: 50%;
+          width: 1.65rem;
+          height: 1.65rem;
+          display: grid;
+          place-items: center;
+          transform: translateY(-50%);
+          border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+          border-radius: 50%;
+          font: 500 1.15rem/1 ui-sans-serif, system-ui, sans-serif;
+        }
+
+        #contents .contents-part[open] summary::after { content: '–'; }
+        #contents .contents-part summary:focus-visible {
+          outline: .18rem solid currentColor;
+          outline-offset: -.3rem;
+        }
+
+        #contents .contents-part__heading {
+          display: grid;
+          gap: .18rem;
+          min-width: 0;
+        }
+
+        #contents .contents-part__range,
+        #contents .contents-part__title,
+        #contents .contents-part__time { margin: 0; }
+
+        #contents .contents-part__range {
+          font: 650 .72rem/1.2 ui-sans-serif, system-ui, sans-serif;
+          letter-spacing: .09em;
+          text-transform: uppercase;
+          opacity: .68;
+        }
+
+        #contents .contents-part__title {
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: clamp(1.05rem, 4vw, 1.28rem);
+          line-height: 1.15;
+        }
+
+        #contents .contents-part__time {
+          padding-right: .2rem;
+          font: 600 .75rem/1.2 ui-sans-serif, system-ui, sans-serif;
+          white-space: nowrap;
+          opacity: .7;
+        }
+
+        #contents .contents-part__chapters {
+          margin: 0;
+          padding: 0 .75rem .75rem;
+          list-style: none;
+        }
+
+        #contents .contents-part__chapters li { margin: 0; }
+        #contents .contents-part__chapters li + li {
+          border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+        }
+
+        #contents .contents-part__chapters a {
+          display: grid;
+          grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+          gap: .7rem;
+          align-items: center;
+          min-height: 3.6rem;
+          padding: .55rem .25rem;
+          color: inherit;
+          text-decoration: none;
+          border-radius: .6rem;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        #contents .contents-part__chapters a:hover {
+          background: color-mix(in srgb, currentColor 7%, transparent);
+        }
+
+        #contents .contents-part__chapters a:focus-visible {
+          outline: .16rem solid currentColor;
+          outline-offset: .1rem;
+        }
+
+        #contents .contents-part__chapters a > span:first-child {
+          font: 650 .76rem/1 ui-sans-serif, system-ui, sans-serif;
+          letter-spacing: .05em;
+          opacity: .58;
+        }
+
+        #contents .contents-part__chapters strong {
+          min-width: 0;
+          font-size: .88rem;
+          line-height: 1.25;
+          letter-spacing: .01em;
+        }
+
+        #contents .contents-reading-time,
+        .chapter-reading-time {
+          font: 600 .75rem/1.2 ui-sans-serif, system-ui, sans-serif;
+          letter-spacing: .01em;
+          white-space: nowrap;
+          opacity: .66;
+        }
+
+        .chapter-reading-time {
+          margin: .55rem 0 0;
+        }
+
+        @media (max-width: 680px) {
+          .cover {
+            min-height: auto !important;
+            padding: max(5rem, calc(env(safe-area-inset-top) + 3.5rem)) 1.1rem 3rem !important;
+          }
+
+          .cover__inner { width: 100%; }
+          .cover h1 {
+            max-width: 10ch;
+            font-size: clamp(2.7rem, 14vw, 4.6rem) !important;
+            line-height: .92 !important;
+          }
+
+          .cover__subtitle { margin-top: 1rem; }
+          .cover__actions {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            width: min(100%, 24rem);
+            gap: .65rem !important;
+          }
+
+          .cover__actions .button {
+            justify-content: center;
+            width: 100%;
+            min-height: 3.25rem;
+          }
+
+          .contents { padding: 3.25rem 1rem 5rem !important; }
+          .contents__inner { width: 100%; }
+
+          #contents .contents-part summary {
+            grid-template-columns: minmax(0, 1fr);
+            gap: .3rem;
+            padding-right: 3rem;
+          }
+
+          #contents .contents-part__time { padding: 0; }
+
+          #contents .contents-part__chapters a {
+            grid-template-columns: 2rem minmax(0, 1fr);
+            gap: .55rem;
+            min-height: 4rem;
+          }
+
+          #contents .contents-reading-time {
+            grid-column: 2;
+            margin-top: -.25rem;
+          }
+
+          .chapter-opening { padding-top: 4.5rem !important; }
+        }
+
+        @media (min-width: 860px) {
+          #contents .contents-groups--compact {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          #contents .contents-part,
+          #contents .contents-part * { scroll-behavior: auto !important; }
+        }
+      `;
+
+      function buildCompactContents(doc, chapterTimes) {
+        const groups = doc.querySelector('.contents-groups');
+        if (!groups) return;
+
+        const oldGroups = [...groups.querySelectorAll('.contents-group')];
+        const compact = doc.createElement('div');
+        compact.className = 'contents-groups contents-groups--compact';
+
+        oldGroups.forEach((group, index) => {
+          const range = cleanText(group.querySelector('.contents-group__range')?.textContent);
+          const title = cleanText(group.querySelector('.contents-group__title')?.textContent);
+          const links = [...group.querySelectorAll('ol > li > a')];
+          const partMinutes = links.reduce((sum, link) => {
+            const chapter = Number((link.getAttribute('href') || '').match(/chapter-(\d+)/)?.[1]);
+            return sum + (chapterTimes.get(chapter) || 0);
+          }, 0);
+
+          const details = doc.createElement('details');
+          details.className = 'contents-part';
+          if (index === 0) details.open = true;
+
+          const summary = doc.createElement('summary');
+          const heading = doc.createElement('span');
+          heading.className = 'contents-part__heading';
+          heading.innerHTML = `<span class="contents-part__range"></span><span class="contents-part__title"></span>`;
+          heading.querySelector('.contents-part__range').textContent = range;
+          heading.querySelector('.contents-part__title').textContent = title;
+
+          const time = doc.createElement('span');
+          time.className = 'contents-part__time';
+          time.textContent = `${partMinutes} min`;
+          time.setAttribute('aria-label', `About ${partMinutes} minutes for this part`);
+
+          summary.append(heading, time);
+          details.append(summary);
+
+          const list = doc.createElement('ol');
+          list.className = 'contents-part__chapters';
+
+          links.forEach(originalLink => {
+            const href = originalLink.getAttribute('href') || '';
+            const chapter = Number(href.match(/chapter-(\d+)/)?.[1]);
+            const li = doc.createElement('li');
+            const link = originalLink.cloneNode(true);
+            const readTime = doc.createElement('span');
+            readTime.className = 'contents-reading-time';
+            readTime.textContent = `${chapterTimes.get(chapter) || 1} min`;
+            readTime.setAttribute('aria-label', `About ${chapterTimes.get(chapter) || 1} minutes`);
+            link.append(readTime);
+            li.append(link);
+            list.append(li);
+          });
+
+          details.append(list);
+          compact.append(details);
+        });
+
+        groups.replaceWith(compact);
+
+        const heading = doc.getElementById('contents-title');
+        if (heading && !doc.querySelector('.contents__intro')) {
+          const intro = doc.createElement('p');
+          intro.className = 'contents__intro';
+          intro.textContent = 'Open a part to browse its chapters. Reading times are estimates based on the actual chapter length.';
+          heading.insertAdjacentElement('afterend', intro);
+        }
+      }
+
+      async function loadBook() {
+        const response = await fetch(BOOK_URL, { cache: 'no-cache' });
+        if (!response.ok) throw new Error(`Book request failed with ${response.status}`);
+
+        const source = await response.text();
+        const doc = new DOMParser().parseFromString(source, 'text/html');
+        const chapters = [...doc.querySelectorAll('.chapter')];
+        if (!chapters.length) throw new Error('No chapters were found in the book.');
+
+        const chapterTimes = new Map();
+        let totalMinutes = 0;
+
+        chapters.forEach((chapter, index) => {
+          const number = Number(chapter.dataset.chapter) || index + 1;
+          const minutes = minutesFor(chapter.querySelector('.chapter-text')?.textContent || '');
+          chapterTimes.set(number, minutes);
+          totalMinutes += minutes;
+
+          const opening = chapter.querySelector('.chapter-opening');
+          if (opening && !opening.querySelector('.chapter-reading-time')) {
+            const readTime = doc.createElement('p');
+            readTime.className = 'chapter-reading-time';
+            readTime.textContent = `About ${minutes} min read`;
+            const title = opening.querySelector('h2');
+            (title || opening.lastElementChild)?.insertAdjacentElement('afterend', readTime);
+          }
+        });
+
+        buildCompactContents(doc, chapterTimes);
+
+        const totalLabel = `Eight parts · Thirty-two chapters · ${formatTotalTime(totalMinutes)}`;
+        doc.querySelectorAll('.cover__eyebrow, .cover__chapter-count').forEach(node => {
+          node.textContent = totalLabel;
+        });
+
+        const startButton = doc.querySelector('.cover__actions a[href="#chapter-1"]');
+        if (startButton) startButton.innerHTML = `Start Chapter 1 · ${chapterTimes.get(1)} min <span aria-hidden="true">↓</span>`;
+
+        const contentsButton = doc.querySelector('.cover__actions a[href="#contents"]');
+        if (contentsButton) contentsButton.textContent = 'Browse chapters';
+
+        const style = doc.createElement('style');
+        style.setAttribute('data-mobile-reader-refresh', '');
+        style.textContent = mobileReaderStyles;
+        doc.head.append(style);
+
+        const hashFix = doc.createElement('script');
+        hashFix.textContent = `if (location.hash) requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView()));`;
+        doc.body.append(hashFix);
+
+        document.open();
+        document.write('<!doctype html>\n' + doc.documentElement.outerHTML);
+        document.close();
+      }
+
+      loadBook().catch(error => {
+        console.error(error);
+        const status = document.querySelector('.loading p');
+        if (status) status.innerHTML = `The enhanced reader could not be prepared. <a href="${BOOK_URL}">Open the original reader</a>.`;
+      });
+    })();
+  </script>
 </body>
 </html>
